@@ -1,0 +1,51 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
+
+# Load the Boston housing dataset
+data_url = "http://lib.stat.cmu.edu/datasets/boston"
+raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+target = raw_df.values[1::2, 2]
+
+# Normalize the features
+scaler = StandardScaler()
+data = scaler.fit_transform(data)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=42)
+
+# Build the model
+model = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=64, activation='relu', input_shape=[13]),
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=1)
+])
+
+# Compile the model
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+              loss='mean_squared_error')
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=100, batch_size=32, verbose=1, validation_split=0.2)
+
+# Evaluate the model
+loss = model.evaluate(X_test, y_test, verbose=0)
+print('Test loss:', loss)
+
+# Make predictions
+predictions = model.predict(X_test)
+
+# Calculate R^2 score (coefficient of determination)
+r2 = r2_score(y_test, predictions)
+print('R^2 score:', r2)
+
+# Example predictions and actual values
+print('Example predictions:')
+for i in range(10):
+    print('Predicted:', predictions[i][0])
+    print('Actual:', y_test[i])
+    print()
